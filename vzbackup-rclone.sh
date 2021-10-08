@@ -2,7 +2,7 @@
 # ./vzbackup-rclone.sh rehydrate YYYY/MM/DD file_name_encrypted.bin
 
 ############ /START CONFIG
-dumpdir="/mnt/pve/pvebackups01/dump" # Set this to where your vzdump files are stored
+dumpdir="/var/lib/vz/dump" # Set this to where your vzdump files are stored
 MAX_AGE=3 # This is the age in days to keep local backup copies. Local backups older than this are deleted.
 ############ /END CONFIG
 
@@ -15,7 +15,7 @@ rehydrate=${2} #enter the date you want to rehydrate in the following format: YY
 if [ ! -z "${3}" ];then
         CMDARCHIVE=$(echo "/${3}" | sed -e 's/\(.bin\)*$//g')
 fi
-tarfile=${TARFILE}
+tarfile=${TARGET}
 exten=${tarfile#*.}
 filename=${tarfile%.*.*}
 
@@ -55,30 +55,15 @@ if [[ ${COMMAND} == 'job-end' ||  ${COMMAND} == 'job-abort' ]]; then
     trap clean_up EXIT
     _now=$(date +%Y-%m-%d.%H.%M.%S)
     _HOSTNAME=$(hostname -f)
-    _filename1="$_tdir/proxmoxetc.$_now.tar"
-    _filename2="$_tdir/proxmoxpve.$_now.tar"
-    _filename3="$_tdir/proxmoxroot.$_now.tar"
-    _filename4="$_tdir/proxmox_backup_"$_HOSTNAME"_"$_now".tar.gz"
+    _filename1="$_tdir/pveConfig.$_now.tgz"
 
     echo "Tar files"
     # copy key system files
-    tar --warning='no-file-ignored' -cPf "$_filename1" /etc/.
-    tar --warning='no-file-ignored' -cPf "$_filename2" /var/lib/pve-cluster/.
-    tar --warning='no-file-ignored' -cPf "$_filename3" /root/.
-
-    echo "Compressing files"
-    # archive the copied system files
-    tar -cvzPf "$_filename4" $_tdir/*.tar
-
-    # copy config archive to backup folder
-    #mkdir -p $rclonedir
-    cp -v $_filename4 $_bdir/
-    #cp -v $_filename4 $rclonedir/
-    echo "rcloning $_filename4"
+    tar --warning='no-file-ignored' -zcPf "$_filename1" /etc/pve/.
+    echo "rcloning $_filename1"
     #ls $rclonedir
     rclone --config /root/.config/rclone/rclone.conf \
-    --drive-chunk-size=32M move $_filename4 gd-backup_crypt:/$timepath \
+    --drive-chunk-size=32M move $_filename1 gd-backup_crypt:/$timepath \
     -v --stats=60s --transfers=16 --checkers=16
 
-    #rm -rfv $rcloneroot
 fi
