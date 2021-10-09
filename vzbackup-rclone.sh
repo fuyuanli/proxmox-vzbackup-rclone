@@ -8,7 +8,7 @@ MAX_AGE=3 # This is the age in days to keep local backup copies. Local backups o
 
 _bdir="$dumpdir"
 rcloneroot="$dumpdir/rclone"
-timepath="$(date +%Y)/$(date +%m)/$(date +%d)"
+timepath="$(date +%Y)/$(date +%m)"
 rclonedir="$rcloneroot/$timepath"
 COMMAND=${1}
 rehydrate=${2} #enter the date you want to rehydrate in the following format: YYYY/MM/DD
@@ -29,8 +29,9 @@ if [[ ${COMMAND} == 'rehydrate' ]]; then
 fi
 
 if [[ ${COMMAND} == 'job-start' ]]; then
-    echo "Deleting backups older than $MAX_AGE days."
-    find $dumpdir -type f -mtime +$MAX_AGE -exec /bin/rm -f {} \;
+#    echo "Deleting backups older than $MAX_AGE days."
+#    find $dumpdir -type f -mtime +$MAX_AGE -exec /bin/rm -f {} \;
+    echo "Backup VM/LXC with Rclone"
 fi
 
 if [[ ${COMMAND} == 'backup-end' ]]; then
@@ -40,7 +41,7 @@ if [[ ${COMMAND} == 'backup-end' ]]; then
     echo "rcloning $rclonedir"
     #ls $rclonedir
     rclone --config /root/.config/rclone/rclone.conf \
-    --drive-chunk-size=32M copy $tarfile gd-backup_crypt:/$timepath \
+    --drive-chunk-size=32M copy $tarfile gd-backup_crypt:/$timepath/vzdump \
     -v --stats=60s --transfers=16 --checkers=16
 fi
 
@@ -63,7 +64,7 @@ if [[ ${COMMAND} == 'job-end' ||  ${COMMAND} == 'job-abort' ]]; then
     echo "rcloning $_filename1"
     #ls $rclonedir
     rclone --config /root/.config/rclone/rclone.conf \
-    --drive-chunk-size=32M move $_filename1 gd-backup_crypt:/$timepath \
+    --drive-chunk-size=32M move $_filename1 gd-backup_crypt:/$timepath/pveconfig \
     -v --stats=60s --transfers=16 --checkers=16
 
 fi
